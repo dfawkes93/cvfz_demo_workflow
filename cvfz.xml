@@ -1,0 +1,1393 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--Licensed Materials - Property of Teracloud S.A.
+5650-ZOS © Copyright Teracloud S.A. 2021
+All Rights Reserved.
+US Government Users Restricted Rights - Use, duplication or disclosure restricted by GSA ADP Schedule Contract with IBM Corp.-->
+<workflow>
+    <autoTakeOwnership>true</autoTakeOwnership>
+    <workflowInfo>
+        <workflowID scope="none">cvfz_conf</workflowID>
+        <workflowDefaultName>Configure Cat Visualisation Facility for Z</workflowDefaultName>
+        <workflowDescription>This demonstration workflow will perform configuration of Cat Visualisation Facility for Z</workflowDescription>
+        <workflowVersion>1.0.1</workflowVersion>
+        <vendor>21CSW</vendor>
+        <Configuration>
+            <productID>CVF</productID>
+            <productName>Cat Visualiation Facility for Z</productName>
+            <productVersion>1.0.1</productVersion>
+        </Configuration>
+    </workflowInfo>
+<!-- ************************************************************ -->
+<!--                                                              -->
+<!--                       GENERAL SETTINGS                       -->
+<!--                                                              -->
+<!-- ************************************************************ -->
+    <variable name="SMPHLQ" scope="instance" visibility="private">
+        <label>SMP/E Install Location</label>
+        <abstract>High Level Qualifier</abstract>
+        <description>
+        <p>The high level qualifier CVFZ was installed under.
+        For example, if SMP/E installed datasets take the form "CVF.V101.SCVF*", then CVF.V101 is the high level qualifier</p>
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>CVF.101</default>
+        </string>
+    </variable>
+    <variable name="RECONFIGURE" scope="instance" visibility="private">
+        <label>Reconfigure</label>
+        <abstract>Overwrite existing files</abstract>
+        <description>
+        When enabled, the workflow will overwrite any members that may exist from previous Cat Visualisation Facility for Z configurations.
+        A customer wishing to preserve existing data should select FALSE. This may be changed on a per-step basis.
+        </description>
+        <category>General</category>
+        <boolean>
+            <default>false</default>
+        </boolean>
+    </variable>
+    <variable name="INSTHLQ" scope="instance" visibility="private">
+        <label>Config HLQ</label>
+        <abstract>High Level Qualifier</abstract>
+        <description>The high level qualifier under which config datasets PARMLIB, PROCLIB, JCLLIB and CLIST will be created.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>CVF.CONFIG</default>
+        </string>
+    </variable>
+    <variable name="reconfigure" scope="instance" visibility="private">
+        <label>Reconfigure</label>
+        <abstract>Overwrite existing files</abstract>
+        <description>
+        When set to TRUE, the workflow will overwrite any members that may exist from previous CVFZ configurations.
+        A customer wishing to preserve existing data should select FALSE. This may be changed on a per-step basis.
+        </description>
+        <category>General</category>
+        <boolean>
+            <default>false</default>
+        </boolean>
+    </variable>
+    <variable name="parm_catsource" scope="instance" visibility="private">
+        <label>Source of cats</label>
+        <abstract>Dataset</abstract>
+        <description>CVFZ looks for cats in a specific dataset. A cataset, if you will. 
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>CVF.CATS</default>
+        </string>
+    </variable>
+    <variable name="parm_codepage" scope="instance" visibility="private">
+        <label>Codepage</label>
+        <abstract>3 or 4 digit number</abstract>
+        <description>CVFZ needs to change its output depending on the codepage in use.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>1047</default>
+        </string>
+    </variable>
+    <variable name="parm_natlang" scope="instance" visibility="private">
+        <label>Language</label>
+        <abstract>Select one</abstract>
+        <description>CVFZ currently supports English and Japanese. 
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="true" multiLine="false">
+            <choice>English</choice>
+            <choice>Japanese</choice>
+            <default>English</default>
+        </string>
+    </variable>
+    <variable name="VOL_PROCLIB" scope="instance" visibility="private">
+        <label>PROCLIB Volume</label>
+        <abstract>Volser</abstract>
+        <description>
+        <p>The volume to allocate the PROCLIB dataset on.
+        The PROCLIB dataset contains the Change Tracker started task job.<br/></p>
+        </description>
+        <category>Volume</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <validationType>VOLSER</validationType>
+        </string>
+    </variable>
+    <variable name="VOL_JCLLIB" scope="instance" visibility="private">
+        <label>JCLLIB Volume</label>
+        <abstract>Volser</abstract>
+        <description>
+        <p>The volume to allocate the JCLLIB dataset.
+        The JCLLIB dataset contains tailored members .<br/>
+        If your environment does not use SMS, this must be specified. If SMS is enabled, then this parameter will be ignored except when used in conjunction with a storage class with the Guaranteed Space attribute set</p>
+        </description>
+        <category>Volume</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <validationType>VOLSER</validationType>
+        </string>
+    </variable>
+    <variable name="VOL_PARMLIB" scope="instance" visibility="private">
+        <label>PARMLIB Volume</label>
+        <abstract>Volser</abstract>
+        <description>
+        <p>The volume to allocate the PARMLIB dataset on.
+        The PARMLIB dataset contains parameters and options for configuring Change Tracker.<br/>
+        If your environment does not use SMS, this must be specified. If SMS is enabled, then this parameter will be ignored except when used in conjunction with a storage class with the Guaranteed Space attribute set</p>
+        </description>
+        <category>Volume</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <validationType>VOLSER</validationType>
+        </string>
+    </variable>
+    <variable name="VOL_CLIST" scope="instance" visibility="private">
+        <label>CLIST Volume</label>
+        <abstract>Volser</abstract>
+        <description>
+        <p>The volume to allocate the CLIST dataset on.
+        The CLIST dataset contains the CYGISPF and CSAVE CLISTS, which should
+        be copied to a common CLIST data set.<br/>
+        If your environment does not use SMS, this must be specified. If SMS is enabled, then this parameter will be ignored except when used in conjunction with a storage class with the Guaranteed Space attribute set</p>
+        </description>
+        <category>Volume</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <validationType>VOLSER</validationType>
+        </string>
+    </variable>
+    <variable name="STORCLAS_PROCLIB" scope="instance" visibility="private">
+        <label>PROCLIB STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the PROCLIB dataset with.
+        The PROCLIB dataset contains the Cat Visualisation Facility for Z started task PROC.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PROCLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_JCLLIB" scope="instance" visibility="private">
+        <label>JCLLIB STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the JCLLIB dataset with.
+        The JCLLIB dataset contains JCL relevant to Cat Visualisation Facility for Z configuration.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>JCLLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_PARMLIB" scope="instance" visibility="private">
+        <label>PARMLIB STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the PARMLIB dataset with.
+        The PARMLIB dataset contains parameters and options for configuring Cat Visualisation Facility for Z.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PARMLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_CLIST" scope="instance" visibility="private">
+        <label>CLIST STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the CLIST dataset with.
+        The CLIST dataset contains the CVFISPF and CSAVE CLISTS, which should
+        be copied to a common CLIST data set.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>CLIST</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_REPO_DATA" scope="instance" visibility="private">
+        <label>Data Repository STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the repository VSAM files on.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_REPO_CONTROL" scope="instance" visibility="private">
+        <label>Control Repository STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_REPO_ARCHIVE_DATA" scope="instance" visibility="private">
+        <label>Archived Data Repository STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="STORCLAS_REPO_ARCHIVE_CONTROL" scope="instance" visibility="private">
+        <label>Archived Control Repository STORCLAS</label>
+        <abstract>STORCLAS</abstract>
+        <description>
+        <p>The STORCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_PROCLIB" scope="instance" visibility="private">
+        <label>PROCLIB MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the PROCLIB dataset with.
+        The PROCLIB dataset contains the Cat Visualisation Facility for Z started task job.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PROCLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_JCLLIB" scope="instance" visibility="private">
+        <label>JCLLIB MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the JCLLIB dataset with.
+        The JCLLIB dataset contains JCL relevant to Cat Visualisation Facility for Z configuration.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>JCLLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_PARMLIB" scope="instance" visibility="private">
+        <label>PARMLIB MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the PARMLIB dataset with.
+        The PARMLIB dataset contains parameters and options for configuring Cat Visualisation Facility for Z.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PARMLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_CLIST" scope="instance" visibility="private">
+        <label>CLIST MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the CLIST dataset with.
+        The CLIST dataset contains the CVFISPF and CSAVE CLISTS, which should
+        be copied to a common CLIST data set.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>CLIST</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_REPO_DATA" scope="instance" visibility="private">
+        <label>Data Repository MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_REPO_CONTROL" scope="instance" visibility="private">
+        <label>Control Repository MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_REPO_ARCHIVE_DATA" scope="instance" visibility="private">
+        <label>Archived Data Repository MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="MGMTCLAS_REPO_ARCHIVE_CONTROL" scope="instance" visibility="private">
+        <label>Archived Control Repository MGMTCLAS</label>
+        <abstract>MGMTCLAS</abstract>
+        <description>
+        <p>The MGMTCLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_PROCLIB" scope="instance" visibility="private">
+        <label>PROCLIB DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the PROCLIB dataset with.
+        The PROCLIB dataset contains the Cat Visualisation Facility for Z started task job.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PROCLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_JCLLIB" scope="instance" visibility="private">
+        <label>JCLLIB DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the JCLLIB dataset.
+        The JCLLIB dataset is a copy of the SMP/E installed SCVFINST dataset,
+        and is used to make changes to members, leaving the SMP/E assets intact.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>JCLLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_PARMLIB" scope="instance" visibility="private">
+        <label>PARMLIB DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the PARMLIB dataset with.
+        The PARMLIB dataset contains parameters and options for configuring Cat Visualisation Facility for Z.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>PARMLIB</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_CLIST" scope="instance" visibility="private">
+        <label>CLIST DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the CLIST dataset with.
+        The CLIST dataset contains the CVFISPF and CSAVE CLISTS, which should
+        be copied to a common CLIST data set.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>CLIST</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_REPO_DATA" scope="instance" visibility="private">
+        <label>Data Repository DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_REPO_CONTROL" scope="instance" visibility="private">
+        <label>Control Repository DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_REPO_ARCHIVE_DATA" scope="instance" visibility="private">
+        <label>Repository DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="DATACLAS_REPO_ARCHIVE_CONTROL" scope="instance" visibility="private">
+        <label>Repository DATACLAS</label>
+        <abstract>DATACLAS</abstract>
+        <description>
+        <p>The DATACLAS to allocate the repository VSAM files with.
+        There are two VSAM files for the operation of the software,
+        and two VSAM files for the operation of the archive system.<br/>
+        This parameter will only be included if a value has been entered. If left blank, it will be skipped and SMS will use the default value as defined by your environment</p>
+        </description>
+        <category>REPOSITORY ARCHIVE</category>
+        <string valueMustBeChoice="false" multiLine="false">
+        </string>
+    </variable>
+    <variable name="dynamic_apf" scope="instance" visibility="private">
+        <label>Dynamically APF Authorize</label>
+        <abstract>Via SETPROG command</abstract>
+        <description>
+        If selected, this step will also issue a SETPROG command to dynamically APF Authorize SCYGLNK. This will be reset at next IPL, unless the associated PROGxx member is added to the parmlib concatenation to reissue the command.  
+        </description>
+        <category>General</category>
+        <boolean>
+            <default>false</default>
+        </boolean>
+    </variable>
+    <variable name="cvfparms_step" scope="instance" visibility="private">
+        <label>Parms Step Status</label>
+        <abstract>Parms Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="cvfparms_conf_step" scope="instance" visibility="private">
+        <label>Parms conf Step Status</label>
+        <abstract>Parms conf Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="proclib_step" scope="instance" visibility="private">
+        <label>PROCLIB Step Status</label>
+        <abstract>PROCLIB Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="proclib_conf_step" scope="instance" visibility="private">
+        <label>Proc Config Status</label>
+        <abstract>Proc Config Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="clist_step" scope="instance" visibility="private">
+        <label>CLIST Step Status</label>
+        <abstract>CLIST Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="clist_conf_step" scope="instance" visibility="private">
+        <label>Clist Config Status</label>
+        <abstract>Clist Config Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="jcllib_step" scope="instance" visibility="private">
+        <label>JCLLIB Step Status</label>
+        <abstract>JCLLIB Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="jcllib_member_step" scope="instance" visibility="private">
+        <label>JCLLIB conf Step Status</label>
+        <abstract>JCLLIB conf Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <variable name="apf_auth_step" scope="instance" visibility="private">
+        <label>APF Step Status</label>
+        <abstract>APF Step Status</abstract>
+        <description>
+        Describes whether or not this step should be run, based on discovery.
+        </description>
+        <category>General</category>
+        <string valueMustBeChoice="false" multiLine="false">
+            <default>Enabled</default>
+        </string>
+    </variable>
+    <step name="discovery" optional="false">
+        <title>Discovery</title>
+        <description>
+            <p>
+            This step checks your system environment, initializes variables used by the workflow and marks any unnecessary steps as skipped.<br/>
+            If you are modifying an existing configuration, please ensure all cvfz started tasks on the sysplex have been shut down before proceeding.
+            </p>
+        </description>
+        <variableValue name="SMPHLQ" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="INSTHLQ" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="VOL_PROCLIB" scope="instance" noPromptIfSet="false" required="false"/>
+        <variableValue name="VOL_JCLLIB" scope="instance" noPromptIfSet="false" required="false"/>
+        <variableValue name="VOL_PARMLIB" scope="instance" noPromptIfSet="false" required="false"/>
+        <variableValue name="VOL_CLIST" scope="instance" noPromptIfSet="false" required="false"/>
+        <instructions substitution="false">
+        Run this script.
+        Please note: you will require READ access to the TSOAUTH CONSOLE resource to run this step.
+        </instructions>
+        <weight>1</weight>
+        <skills>System Programmer</skills>
+        <template>
+            <inlineTemplate substitution="true">/* REXX */
+
+insthlq = '${instance-INSTHLQ}'
+parmlib = insthlq'.PARMLIB'
+jcllib = insthlq'.JCLLIB'
+proclib = insthlq'.PROCLIB'
+clist = insthlq'.CLIST'
+smphlq = '${instance-SMPHLQ}'
+
+/*******************************************/
+/******* CHECK DATA SET ALLOCATIONS ********/
+/*******************************************/
+
+/******************JCLLIB*******************/
+writedata.0 = 0
+writen = 1
+writedata.writen = CHECKALLOC(jcllib, "jcllib_step")
+writedata.0 = writen
+
+writen = writen + 1
+temp = CHECKALLOC(jcllib'(CVFSAMP1)', "jcllib_member_step")
+if (temp = "OK") then do
+   writedata.writen = CHECKALLOC(jcllib'(CVFSAMP2)', "jcllib_member_step")
+end
+else do
+   writedata.writen = temp
+end
+writedata.0 = writen
+
+/******************PARMLIB*******************/
+writen = writen + 1
+writedata.writen = CHECKALLOC(parmlib, "cvfparms_step")
+writedata.0 = writen
+writen = writen + 1
+writedata.writen = CHECKALLOC(parmlib'(CVFPARMS)', "cvfparms_conf_step")
+writedata.0 = writen
+
+/******************PROCLIB*******************/
+writen = writen + 1
+writedata.writen = CHECKALLOC(proclib, "proclib_step")
+writedata.0 = writen
+writen = writen + 1
+writedata.writen = CHECKALLOC(proclib'(CVFSTC)', "proclib_conf_step")
+writedata.0 = writen
+
+/******************CLIST*******************/
+writen = writen + 1
+writedata.writen = CHECKALLOC(clist, "clist_step")
+writedata.0 = writen
+writen = writen + 1
+writedata.writen = CHECKALLOC(clist'(CVFISPF)', "clist_conf_step")
+writedata.0 = writen
+
+/** Write the output file **/
+ADDRESS SYSCALL "WRITEFILE $_output 777 writedata."
+if rc = 0 then do
+    say ' Write Successful'
+    say;say ' Variables in workflow have been updated.';say
+end
+else do
+    say ' Write FAILED. Rc='rc
+end
+
+exit rc
+
+/*******************************************/
+/********* CHECK APF AUTHORIZATION *********/
+/*******************************************/
+
+/* We don't actually need APF authorization so just skip it anyway */
+writen = writen + 1
+writedata.writen = "apf_auth_step=Disabled"
+writedata.0 = writen
+
+/*******************************************************/
+CHECKALLOC: PROCEDURE
+/*******************************************************/
+if arg() &lt;&gt; 2 then
+return 'CHECKALLOC bad arg: must have DSN, stepname'
+
+DSN = arg(1)
+stepname = arg(2)
+
+say 'Checking existence of 'DSN'...'
+result = SYSDSN("'"DSN"'")
+if result = 'OK' then do
+    say DSN' found, no need to create'
+        return stepname"=Disabled"
+end
+else do
+    say DSN' not found, will be created in workflow'
+        return stepname"=Enabled"
+end
+            </inlineTemplate>
+            <submitAs maxRc="0">TSO-REXX-JCL</submitAs>
+            <output needResolveConflicts="false">/tmp/cvf_inputfile.txt</output>
+        </template>
+    </step>
+    <step name="allocations" optional="false">
+        <title>Allocate required data sets</title>
+        <description>
+        <p>
+        These steps will allocate the datasets needed for configuring CVFZ.
+        </p>
+        </description>
+        <step name="alloc_variables" optional="true">
+            <title>Define SMS Classes</title>
+            <description>
+                Optionally define the STORCLAS, MGMTCLAS and DATACLAS for each dataset that the workflow will allocate. These can be left blank, or manually filled out.
+            </description>
+            <prereqStep name="discovery"/>
+            <variableValue name="STORCLAS_PROCLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="STORCLAS_JCLLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="STORCLAS_PARMLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="STORCLAS_CLIST" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="MGMTCLAS_PROCLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="MGMTCLAS_JCLLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="MGMTCLAS_PARMLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="MGMTCLAS_CLIST" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="DATACLAS_PROCLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="DATACLAS_JCLLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="DATACLAS_PARMLIB" scope="instance" noPromptIfSet="false" required="false"/>
+            <variableValue name="DATACLAS_CLIST" scope="instance" noPromptIfSet="false" required="false"/>
+            <instructions substitution="false">
+                That sure was a lot of variables. Sorry to put you through all that.
+            </instructions>
+            <weight>1</weight>
+            <skills>Storage Administrator</skills>
+            <canMarkAsFailed>false</canMarkAsFailed>
+        </step>
+        <step name="alloc_jcllib" optional="false">
+            <title>Create the JCLLIB data set</title>
+            <description>
+                <p>
+                This step will create the JCLLIB dataset under your HLQ.
+                </p>
+            </description>
+            <prereqStep name="discovery"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-jcllib_step} == 'Disabled']]></stateExpression>
+                    <stateExpression state="Ready"><![CDATA[${instance-jcllib_step} == 'Enabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <instructions substitution="false">
+            Run this job.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>true</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+                <inlineTemplate substitution="true">
+//STEP1    EXEC PGM=IEFBR14
+//DD1      DD DSN=${instance-INSTHLQ}.JCLLIB,
+#if(${instance-VOL_JCLLIB} &amp;&amp; ${instance-VOL_JCLLIB} != "" &amp;&amp; ${instance-VOL_JCLLIB} != "null")
+// VOL=SER=${instance-VOL_JCLLIB},                                         
+#end                                                                   
+#if(${instance-STORCLAS_JCLLIB} &amp;&amp; ${instance-STORCLAS_JCLLIB} != "" &amp;&amp; ${instance-STORCLAS_JCLLIB} != "null")
+// STORCLAS=${instance-STORCLAS_JCLLIB},                                         
+#end                                                                   
+#if(${instance-MGMTCLAS_JCLLIB} &amp;&amp; ${instance-MGMTCLAS_JCLLIB} != "" &amp;&amp; ${instance-MGMTCLAS_JCLLIB} != "null")
+// MGMTCLAS=${instance-MGMTCLAS_JCLLIB},                                         
+#end                                                                   
+#if(${instance-DATACLAS_JCLLIB} &amp;&amp; ${instance-DATACLAS_JCLLIB} != "" &amp;&amp; ${instance-DATACLAS_JCLLIB} != "null")
+// DATACLAS=${instance-DATACLAS_JCLLIB},                                         
+#end                                                                   
+// UNIT=SYSALLDA,
+// DISP=(NEW,CATLG,DELETE),
+// DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=8800),
+// SPACE=(TRK,(13,5,12))
+//*
+                </inlineTemplate>
+                <submitAs maxRc="0">JCL</submitAs>
+                <maxLrecl>80</maxLrecl>
+            </template>
+        </step>
+        <step name="alloc_parmlib" optional="false">
+            <title>Create PARMLIB dataset</title>
+            <description>This job allocates a PARMLIB data set. The members in here should be added to your SYS1.PARMLIB following your site's policy.</description>
+            <prereqStep name="discovery"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-cvfparms_conf_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <instructions substitution="false">Run this job</instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>true</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+                <inlineTemplate substitution="true">
+//STEP1    EXEC PGM=IEFBR14
+//DD1      DD DSN=${instance-INSTHLQ}.PARMLIB,
+#if(${instance-VOL_PARMLIB} &amp;&amp; ${instance-VOL_PARMLIB} != "" &amp;&amp; ${instance-VOL_PARMLIB} != "null")
+// VOL=SER=${instance-VOL_PARMLIB},                                         
+#end                                                                   
+#if(${instance-STORCLAS_PARMLIB} &amp;&amp; ${instance-STORCLAS_PARMLIB} != "" &amp;&amp; ${instance-STORCLAS_PARMLIB} != "null")
+// STORCLAS=${instance-STORCLAS_PARMLIB},                                         
+#end                                                                   
+#if(${instance-MGMTCLAS_PARMLIB} &amp;&amp; ${instance-MGMTCLAS_PARMLIB} != "" &amp;&amp; ${instance-MGMTCLAS_PARMLIB} != "null")
+// MGMTCLAS=${instance-MGMTCLAS_PARMLIB},                                         
+#end                                                                   
+#if(${instance-DATACLAS_PARMLIB} &amp;&amp; ${instance-DATACLAS_PARMLIB} != "" &amp;&amp; ${instance-DATACLAS_PARMLIB} != "null")
+// DATACLAS=${instance-DATACLAS_PARMLIB},                                         
+#end    
+// UNIT=SYSALLDA,
+// DISP=(NEW,CATLG,DELETE),
+// DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=8800),
+// SPACE=(TRK,(1,1,3))
+//*
+                </inlineTemplate>
+                <submitAs maxRc="0">JCL</submitAs>
+                <maxLrecl>80</maxLrecl>
+            </template>
+        </step>
+        <step name="alloc_proclib" optional="false">
+            <title>Allocate PROCLIB data set</title>
+            <description>
+                <p>
+                This step allocates a dataset to contain members that will need to be added to your site's procedure library
+                </p>
+            </description>
+            <prereqStep name="discovery"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-proclib_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <instructions substitution="false">
+                Run this job.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>true</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+                <inlineTemplate substitution="true">
+//STEP1    EXEC PGM=IEFBR14
+//DD1      DD DSN=${instance-INSTHLQ}.PROCLIB,
+#if(${instance-VOL_PROCLIB} &amp;&amp; ${instance-VOL_PROCLIB} != "" &amp;&amp; ${instance-VOL_PROCLIB} != "null")
+// VOL=SER=${instance-VOL_PROCLIB},                                         
+#end                                                                   
+#if(${instance-STORCLAS_PROCLIB} &amp;&amp; ${instance-STORCLAS_PROCLIB} != "" &amp;&amp; ${instance-STORCLAS_PROCLIB} != "null")
+// STORCLAS=${instance-STORCLAS_PROCLIB},                                         
+#end                                                                   
+#if(${instance-MGMTCLAS_PROCLIB} &amp;&amp; ${instance-MGMTCLAS_PROCLIB} != "" &amp;&amp; ${instance-MGMTCLAS_PROCLIB} != "null")
+// MGMTCLAS=${instance-MGMTCLAS_PROCLIB},                                         
+#end                                                                   
+#if(${instance-DATACLAS_PROCLIB} &amp;&amp; ${instance-DATACLAS_PROCLIB} != "" &amp;&amp; ${instance-DATACLAS_PROCLIB} != "null")
+// DATACLAS=${instance-DATACLAS_PROCLIB},                                         
+#end    
+// UNIT=SYSALLDA,
+// DISP=(NEW,CATLG,DELETE),
+// DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=8800),
+// SPACE=(TRK,(1,1,1))
+//*
+                </inlineTemplate>
+                <submitAs maxRc="0">JCL</submitAs>
+                <maxLrecl>80</maxLrecl>
+            </template>
+        </step>
+        <step name="alloc_clist" optional="false">
+            <title>Allocate the CLIST data set</title>
+            <description>
+                <p>
+                This step allocates a dataset to contain CLIST members
+                </p>
+            </description>
+            <prereqStep name="discovery"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-clist_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <instructions substitution="false">
+            Run this job.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>true</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+                <inlineTemplate substitution="true">
+//STEP1    EXEC PGM=IEFBR14
+//DD1      DD DSN=${instance-INSTHLQ}.CLIST,
+#if(${instance-VOL_CLIST} &amp;&amp; ${instance-VOL_CLIST} != "" &amp;&amp; ${instance-VOL_CLIST} != "null")
+// VOL=SER=${instance-VOL_CLIST},                                         
+#end                                                                   
+#if(${instance-STORCLAS_CLIST} &amp;&amp; ${instance-STORCLAS_CLIST} != "" &amp;&amp; ${instance-STORCLAS_CLIST} != "null")
+// STORCLAS=${instance-STORCLAS_CLIST},                                         
+#end                                                                   
+#if(${instance-MGMTCLAS_CLIST} &amp;&amp; ${instance-MGMTCLAS_CLIST} != "" &amp;&amp; ${instance-MGMTCLAS_CLIST} != "null")
+// MGMTCLAS=${instance-MGMTCLAS_CLIST},                                         
+#end                                                                   
+#if(${instance-DATACLAS_CLIST} &amp;&amp; ${instance-DATACLAS_CLIST} != "" &amp;&amp; ${instance-DATACLAS_CLIST} != "null")
+// DATACLAS=${instance-DATACLAS_CLIST},                                         
+#end    
+// UNIT=SYSALLDA,
+// DISP=(NEW,CATLG,DELETE),
+// DCB=(DSORG=PO,RECFM=FB,LRECL=80,BLKSIZE=26400),
+// SPACE=(TRK,(1,5,2))
+//*
+                </inlineTemplate>
+                <submitAs maxRc="0">JCL</submitAs>
+                <maxLrecl>80</maxLrecl>
+            </template>
+        </step>
+    </step>
+    <step name="cvfparms_conf" optional="false">
+        <title>Configure Parameters</title>
+        <description>This step updates the CVFPARMS member with user-specified input.</description>
+        <prereqStep name="alloc_parmlib"/>
+        <prereqTargetStateSet>
+            <description>Update the state of this step based on the PARMLIB allocation</description>
+            <extendStateExpression>
+                <description>If one of the prerequisite steps is Complete, set this step to ready.</description>
+                <expression><![CDATA[${alloc_parmlib.stepState}=="Complete" || ${alloc_parmlib.stepState}=="Complete"]]></expression>
+                <targetState>Ready</targetState>
+            </extendStateExpression>
+            <extendStateExpression>
+                <description>If both of the prerequisite steps are Skipped, set this step to ready.</description>
+                <expression><![CDATA[${alloc_parmlib.stepState}=="Skipped" && ${alloc_parmlib.stepState}=="Skipped"]]></expression>
+                <targetState>Ready</targetState>
+            </extendStateExpression>
+        </prereqTargetStateSet>
+        <condition>
+            <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+            <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+            <targetStateSet>
+                <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                <stateExpression state="Skipped"><![CDATA[${instance-cvfparms_conf_step} == 'Disabled']]></stateExpression>
+            </targetStateSet>
+        </condition>
+        <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="parm_catsource" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="parm_codepage" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="parm_natlang" scope="instance" noPromptIfSet="false" required="true"/>
+        <instructions substitution="false">Run this script to configure the CVFPARMS member</instructions>
+        <weight>1</weight>
+        <skills>System Programmer</skills>
+        <autoEnable>true</autoEnable>
+        <canMarkAsFailed>false</canMarkAsFailed>
+        <template>
+            <inlineTemplate substitution="true">/* rexx */
+parm_dsn_in             = '/u/dylanf/misc/sample_wf/templates/cvfparms'
+parm_dsn_out            = '${instance-INSTHLQ}.PARMLIB(CVFPARMS)'
+parm_catsource          = '${instance-parm_catsource}'
+parm_codepage           = '${instance-parm_codepage}'
+parm_natlang            = '${instance-parm_natlang}'
+
+if SYSDSN("'"parm_dsn_out"'") = 'OK' then do
+   if '${instance-reconfigure}' = 'false' then do
+      say "Member "parm_dsn_out" already exists."
+      say "To modify this member, please rerun with 'Reconfigure' set to TRUE"
+      FAIL()
+   end
+end
+
+lines.0 = 0
+address syscall
+readfile parm_dsn_in lines.
+
+if (retval /= 0 | lines.0 = 0) then do
+    say "Could not read "parm_dsn_in
+    FAIL()
+end
+
+outlines.0 = lines.0 + 5
+outlines.1 ="** Workflow generated file"
+outlines.2 ="**"
+outlines.3 ="** Workflow: ${_workflow-workflowName}"
+outlines.4 ="** User:     ${_step-stepOwnerUpper}"
+outlines.5 ="** Time:     "TIME('C')" - "DATE()
+
+do i = 6 to outlines.0
+    j = i - 5
+    outlines.i = lines.j
+end
+
+do i = 1 to outlines.0
+    outlines.i = SETPARM('SOURCEDS', outlines.i, parm_catsource)
+    outlines.i = SETPARM('CODEPAGE', outlines.i, parm_codepage)
+    outlines.i = SETPARM('NATLANG', outlines.i, parm_natlang)
+end
+
+outlines.0 = i
+/* WRITE OUTPUT FILE */
+Address TSO "ALLOC F(OUTDD) DA('"parm_dsn_out"') SHR"
+if RC /= 0 then FAIL()
+Address MVS "EXECIO * DISKW OUTDD ( STEM outlines. FINIS"
+if RC &gt; 1 then FAIL()
+ADDRESS TSO "FREE FI(OUTDD)"      
+say 'CVFSUCCESS'
+exit 0
+
+/*******************************************************/
+SETPARM: PROCEDURE
+/*******************************************************/
+if arg() &lt;&gt; 3 then
+FAIL()
+
+parm = arg(1)
+line = arg(2)
+value = arg(3)
+
+if WORDPOS(parm,line) \= 0 then do
+   return OVERLAY(value, line, 18, 80)
+   end
+
+return line
+
+/*******************************************************/
+FAIL : PROCEDURE
+/*******************************************************/
+say 'CVFFAILURE'
+exit 12
+            </inlineTemplate>
+            <submitAs maxRc="0">TSO-REXX</submitAs>
+            <successPattern>CVFSUCCESS</successPattern>
+            <failedPattern>CVFFAILURE</failedPattern>
+        </template>
+    </step>
+    <step name="create_members" optional="false">
+        <title>Create Members</title>
+        <description>These steps will write tailored members to the datasets created by this workflow.
+        </description>
+        <step name="clist_members" optional="false">
+            <title>Populate CLIST members</title>
+            <description>
+            The CLISTS created by the workflow can be added to a SYSPROC dataset so that they can be run implicitly (i.e by member name).  
+            </description>
+            <prereqStep name="cvfparms_conf"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-clist_conf_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+            <instructions substitution="true">
+                Follow your site's procedures to copy the members in ${instance-INSTHLQ}.CLIST to a SYSPROC dataset.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>false</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+            <inlineTemplate substitution="true">/* rexx */
+dsn_in             = '/u/dylanf/misc/sample_wf/templates/cvfispf'
+dsn_out            = '${instance-INSTHLQ}.CLIST(CVFISPF)'
+
+if SYSDSN("'"dsn_out"'") = 'OK' then do
+   if '${instance-reconfigure}' = 'false' then do
+      say "Member "dsn_out" already exists."
+      say "To modify this member, please rerun with 'Reconfigure' set to TRUE"
+      FAIL()
+   end
+end
+
+lines.0 = 0
+address syscall
+readfile dsn_in lines.
+
+if (retval /= 0 | lines.0 = 0) then do
+    say "Could not read "dsn_in
+    FAIL()
+end
+
+outlines.0 = lines.0 + 3
+outlines.1 ="/* Workflow generated file */"
+outlines.2 ="/* Workflow: ${_workflow-workflowName} */"
+outlines.3 ="/* User: ${_step-stepOwnerUpper} */"
+
+do i = 4 to outlines.0
+    j = i - 3
+    outlines.i = lines.j
+end
+
+/* WRITE OUTPUT FILE */
+Address TSO "ALLOC F(OUTDD) DA('"dsn_out"') SHR"
+if RC /= 0 then FAIL()
+Address MVS "EXECIO * DISKW OUTDD ( STEM outlines. FINIS"
+if RC /= 0 then FAIL()
+ADDRESS TSO "FREE FI(OUTDD)"      
+say 'CVFSUCCESS'
+exit 0
+
+/*******************************************************/
+FAIL : PROCEDURE
+/*******************************************************/
+say 'CVFFAILURE'
+exit 12
+            </inlineTemplate>
+            <submitAs maxRc="0">TSO-REXX</submitAs>
+            <successPattern>CVFSUCCESS</successPattern>
+            <failedPattern>CVFFAILURE</failedPattern>
+        </template>
+        </step>
+        <step name="proclib_members" optional="false">
+            <title>Populate PROCLIB members</title>
+            <description>
+            The PROCS created by the workflow can be added to the SYS1.PROCLIB concatenation so that they can begin after IPL
+            </description>
+            <prereqStep name="cvfparms_conf"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-proclib_conf_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+            <instructions substitution="true">
+                Follow your site's procedures to copy the members in ${instance-INSTHLQ}.PROCLIB to the PROCLIB concatenation.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>false</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+            <inlineTemplate substitution="true">/* rexx */
+dsn_in             = '/u/dylanf/misc/sample_wf/templates/cvfstc'
+dsn_out            = '${instance-INSTHLQ}.PROCLIB(CVFSTC)'
+
+if SYSDSN("'"dsn_out"'") = 'OK' then do
+   if '${instance-reconfigure}' = 'false' then do
+      say "Member "dsn_out" already exists."
+      say "To modify this member, please rerun with 'Reconfigure' set to TRUE"
+      FAIL()
+   end
+end
+
+lines.0 = 0
+address syscall
+readfile dsn_in lines.
+
+if (retval /= 0 | lines.0 = 0) then do
+    say "Could not read "dsn_in
+    FAIL()
+end
+
+outlines.0 = lines.0 + 3
+outlines.1 ="/* Workflow generated file */"
+outlines.2 ="/* Workflow: ${_workflow-workflowName} */"
+outlines.3 ="/* User: ${_step-stepOwnerUpper} */"
+
+do i = 4 to outlines.0
+    j = i - 3
+    outlines.i = lines.j
+end
+
+/* WRITE OUTPUT FILE */
+Address TSO "ALLOC F(OUTDD) DA('"dsn_out"') SHR"
+if RC /= 0 then FAIL()
+Address MVS "EXECIO * DISKW OUTDD ( STEM outlines. FINIS"
+if RC /= 0 then FAIL()
+ADDRESS TSO "FREE FI(OUTDD)"      
+say 'CVFSUCCESS'
+exit 0
+
+/*******************************************************/
+FAIL : PROCEDURE
+/*******************************************************/
+say 'CVFFAILURE'
+exit 12
+            </inlineTemplate>
+            <submitAs maxRc="0">TSO-REXX</submitAs>
+            <successPattern>CVFSUCCESS</successPattern>
+            <failedPattern>CVFFAILURE</failedPattern>
+        </template>
+        </step>
+        <step name="jcllib_members" optional="false">
+            <title>Populate JCLLIB members</title>
+            <description>
+            The JCLLIB contains sample JCL relevant to the operation of CVFZ. This step will tailor this JCL such that it aligns with the configuration settings specified in this workflow and can be executed with no further changes.  
+            </description>
+            <prereqStep name="cvfparms_conf"/>
+            <condition>
+                <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+                <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+                <targetStateSet>
+                    <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                    <stateExpression state="Skipped"><![CDATA[${instance-jcllib_member_step} == 'Disabled']]></stateExpression>
+                </targetStateSet>
+            </condition>
+            <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+            <instructions substitution="true">
+                Run this step to tailor the JCL.
+            </instructions>
+            <weight>1</weight>
+            <skills>System Programmer</skills>
+            <autoEnable>false</autoEnable>
+            <canMarkAsFailed>false</canMarkAsFailed>
+            <template>
+            <inlineTemplate substitution="true">/* rexx */
+dsn_in_1             = '/u/dylanf/misc/sample_wf/templates/cvfsamp1'
+dsn_out_1            = '${instance-INSTHLQ}.JCLLIB(CVFSAMP1)'
+dsn_in_2             = '/u/dylanf/misc/sample_wf/templates/cvfsamp2'
+dsn_out_2            = '${instance-INSTHLQ}.JCLLIB(CVFSAMP2)'
+
+ret = 0
+
+ret = ret + writemem(dsn_in_1, dsn_out_1)
+ret = ret + writemem(dsn_in_2, dsn_out_2)
+
+say 'CVFSUCCESS'
+exit ret
+
+/*******************************************************/
+WRITEMEM: PROCEDURE
+/*******************************************************/
+
+parse arg dsn_in, dsn_out
+
+if SYSDSN("'"dsn_out"'") = 'OK' then do
+   if '${instance-reconfigure}' = 'false' then do
+      say "Member "dsn_out" already exists."
+      say "To modify this member, please rerun with 'Reconfigure' set to TRUE"
+      FAIL()
+   end
+end
+
+lines.0 = 0
+address syscall
+readfile dsn_in lines.
+
+if (retval /= 0 | lines.0 = 0) then do
+    say "Could not read "dsn_in
+    FAIL()
+end
+
+outlines.0 = lines.0 + 3
+outlines.1 ="/* Workflow generated file */"
+outlines.2 ="/* Workflow: ${_workflow-workflowName} */"
+outlines.3 ="/* User: ${_step-stepOwnerUpper} */"
+
+do i = 4 to outlines.0
+    j = i - 3
+    outlines.i = lines.j
+end
+
+/* WRITE OUTPUT FILE */
+Address TSO "ALLOC F(OUTDD) DA('"dsn_out"') SHR"
+if RC /= 0 then FAIL()
+Address MVS "EXECIO * DISKW OUTDD ( STEM outlines. FINIS"
+if RC /= 0 then FAIL()
+ADDRESS TSO "FREE FI(OUTDD)"
+
+return RC
+
+/*******************************************************/
+FAIL : PROCEDURE
+/*******************************************************/
+say 'CVFFAILURE'
+exit 12
+            </inlineTemplate>
+            <submitAs maxRc="0">TSO-REXX</submitAs>
+            <successPattern>CVFSUCCESS</successPattern>
+            <failedPattern>CVFFAILURE</failedPattern>
+        </template>
+        </step>
+    </step>
+    <step name="apf" optional="false">
+        <title>Authorize with APF</title>
+        <description>
+            For some inexplicable reason, the CVFZ load module requires APF authorization. This step will create a PROGCV member containing the necessary command to automatically APF authorize the program. <br/>
+            This step can also optionally issue a one-time SETPROG command to dynamically APF authorize CVFZ so that it can be used without having to IPL.
+        </description>
+        <prereqStep name="cvfparms_conf"/>
+        <condition>
+            <expression><![CDATA[(${discovery.stepState} == "Complete") ? true : false]]></expression>
+            <description><![CDATA[The discovery step must be run to set up the workflow]]></description>
+            <targetStateSet>
+                <description><![CDATA[ Set this step to Skipped if the discovery step determined it to be completed prior.]]></description>
+                <stateExpression state="Skipped"><![CDATA[${instance-apf_auth_step} == 'Disabled']]></stateExpression>
+            </targetStateSet>
+        </condition>
+        <variableValue name="reconfigure" scope="instance" noPromptIfSet="false" required="true"/>
+        <variableValue name="dynamic_apf" scope="instance" noPromptIfSet="false" required="true"/>
+        <instructions substitution="true">
+            Run this step to tailor the JCL.
+        </instructions>
+        <weight>1</weight>
+        <skills>System Programmer</skills>
+        <autoEnable>false</autoEnable>
+        <canMarkAsFailed>false</canMarkAsFailed>
+                            <template>
+                <inlineTemplate substitution="true">/* REXX */                                                      
+load='${instance-SMPHLQ}.LOAD'                              
+                                              
+stcc                ="COM='S CVFSTC'"                                                 
+apfc                =INSERT(lnkvol,"APF ADD DSN("load")",61)
+tgthlq              ='${instance-TGTHLQ}.PARMLIB'                                     
+progmem             =tgthlq"(PROGCV)"                                       
+commndmem           =tgthlq"(COMMNDCV)"
+
+RC = MEMWR('APF',progmem,apfc)                                      
+RC = RC + MEMWR('Started Task',commndmem,stcc)                            
+
+#if(${instance-dynamic_apf} == "true")
+/********** APF AUTHORIZATION ************/
+Address TSO
+"CONSOLE ACTIVATE NAME(WFCON02)"
+if RC /= 0 then FAIL("Error activating console")
+cmd = "SETPROG APF,ADD,DSNAME=${instance-SMPHLQ}.LOAD,SMS"
+"CONSOLE SYSCMD("cmd")"
+if RC /= 0 then FAIL("Error issuing command: "cmd)
+Say "Issued command: "cmd
+"CONSOLE DEACTIVATE"
+if RC /= 0 then FAIL("Error deactivating console")
+#end
+                                                           
+/********************/                                          
+MEMWR: PROCEDURE                                                
+/********************/                                          
+if arg() &lt; 3 then                                               
+   FAIL()                                                       
+   
+if SYSDSN("'"arg(2)"'") = 'OK' then do
+   if '${instance-reconfigure}' = 'false' then do
+      say "Member "arg(2)" already exists and was not modified."
+      say "To modify this member, please rerun with 'Reconfigure' set to TRUE"
+      say "-----------------------------------------"
+    end
+end
+
+DATA.0=3                                                        
+DATA.1=INSERT(" */","/* ",69,,'*')                              
+DATA.2=OVERLAY('Change Tracker 'arg(1),INSERT(" */","/* ",69),8)
+DATA.3=DATA.1                                                   
+do i=3 to arg()                                                 
+   x = i+1                                                      
+   DATA.x = arg(i)                                              
+   DATA.0 = DATA.0 + 1                                          
+end                                                             
+                                                                
+                                                                
+ADDRESS TSO "ALLOC DA('"arg(2)"') F(OUTDD) SHR"                 
+if RC /= 0 then FAIL("Error allocating DD "arg(2))                                          
+ADDRESS MVS "EXECIO * DISKW OUTDD (STEM DATA. FINIS"            
+if RC /= 0 then FAIL("Error writing to "arg(2))
+Say "Successfully wrote to file "arg(2)                                          
+ADDRESS TSO "FREE FI(OUTDD)"                                    
+DROP DATA.                                                      
+RETURN RC
+
+/*******************************************************/       
+FAIL : PROCEDURE                                                
+/*******************************************************/
+parse arg msg
+if msg /= '' then do
+   say 'Error: 'msg
+end       
+say 'CVFFAILURE'                                                
+exit 12                                                         
+                </inlineTemplate>
+                <submitAs maxRc="0">TSO-REXX</submitAs>
+                <successPattern>CVFSUCCESS</successPattern>
+                <failedPattern>CVFFAILURE</failedPattern>
+            </template>
+    </step>
+    <step name="ivp" optional="false">
+        <title>Perform IVP</title>
+        <description>
+        Verify that CVFZ was configured correctly.
+        </description>
+        <prereqStep name="cvfparms_conf"/>
+        <instructions substitution="true">
+            Submit this JCL to verify the installation and configuration of CVFZ.
+        </instructions>
+        <weight>1</weight>
+        <skills>System Programmer</skills>
+        <autoEnable>false</autoEnable>
+        <canMarkAsFailed>false</canMarkAsFailed>
+                    <template>
+                <inlineTemplate substitution="true">
+//RUNCATS JOB  (&amp;SYSUID),NOTIFY=&amp;SYSUID,REGION=0M             
+//RUNME   EXEC PGM=ZOSCATS                                    
+//CVFPARMS DD DSN=DYLANF.CVF.CONFIG.PARMLIB(CVFPARMS),DISP=SHR
+//STEPLIB DD   DISP=SHR,DSN=BENH.TESTCAT.LOAD                 
+                </inlineTemplate>
+                <submitAs maxRc="0">JCL</submitAs>
+                <maxLrecl>80</maxLrecl>
+            </template>
+    </step>
+</workflow>
